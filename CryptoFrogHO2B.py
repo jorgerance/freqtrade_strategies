@@ -17,7 +17,7 @@ from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.persistence import Trade
 from skopt.space import Dimension
 
-class CryptoFrogHO2A(IStrategy):
+class CryptoFrogHO2B(IStrategy):
     # Sell hyperspace params:
     sell_params = {
         "cstp_bail_how": "time",
