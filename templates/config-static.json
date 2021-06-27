@@ -1,0 +1,64 @@
+{
+    "max_open_trades": 3,
+    "stake_currency": "USDT",
+    "stake_amount" : "unlimited",
+    "amend_last_stake_amount ": true,
+    "tradable_balance_ratio": 0.99,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "dry_run_wallet": 55,
+    "cancel_open_orders_on_exit": false,
+    "unfilledtimeout": {
+        "buy": 10,
+        "sell": 30
+    },
+    "bid_strategy": {
+        "ask_last_balance": 0.0,
+        "use_order_book": false,
+        "order_book_top": 1,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "ask_strategy": {
+        "use_order_book": false,
+        "order_book_min": 1,
+        "order_book_max": 1
+    },
+    "pairlists": [
+        {"method": "StaticPairList"}
+    ],
+    "exchange": {
+        "name": "binance",
+        "key": "1",
+        "secret": "2",
+        "ccxt_config": {"enableRateLimit": true},
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 200
+        },
+        "pair_whitelist": ["BTC/USDT", "ETH/USDT", "MATIC/USDT", "DOT/USDT", "DOGE/USDT", "ADA/USDT", "XRP/USDT", "LINK/USDT", "SOL/USDT", "LTC/USDT", "ICP/USDT", "TFUEL/USDT", "FIL/USDT", "KSM/USDT", "VET/USDT", "HARD/USDT", "LUNA/USDT", "SXP/USDT", "EOS/USDT", "RUNE/USDT", "THETA/USDT", "KAVA/USDT", "RLC/USDT", "PERL/USDT", "CAKE/USDT", "ETC/USDT", "TRX/USDT", "BCH/USDT", "XLM/USDT", "BAKE/USDT", "SUSHI/USDT", "GRT/USDT", "1INCH/USDT", "FTM/USDT", "UNI/USDT", "CRV/USDT", "OGN/USDT", "DATA/USDT", "XMR/USDT", "WIN/USDT", "WAVES/USDT", "AAVE/USDT", "ENJ/USDT", "ICX/USDT", "REEF/USDT", "BTT/USDT", "AVAX/USDT", "NEO/USDT", "DENT/USDT", "ZIL/USDT", "DNT/USDT", "COCOS/USDT", "STPT/USDT", "SHIB/USDT", "CELO/USDT", "FORTH/USDT", "CFX/USDT", "ANKR/USDT", "HBAR/USDT", "ALICE/USDT", "COMP/USDT"],
+        "pair_blacklist": []
+    },
+    "edge": {
+        "enabled": false,
+        "process_throttle_secs": 3600,
+        "calculate_since_number_of_days": 7,
+        "allowed_risk": 0.01,
+        "stoploss_range_min": -0.01,
+        "stoploss_range_max": -0.1,
+        "stoploss_range_step": -0.01,
+        "minimum_winrate": 0.60,
+        "minimum_expectancy": 0.10,
+        "min_trade_number": 10,
+        "max_trade_duration_minute": 1440,
+        "remove_pumps": false
+    },
+    "bot_name": "freqtrade_binance_stef",
+    "initial_state": "running",
+    "forcebuy_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
