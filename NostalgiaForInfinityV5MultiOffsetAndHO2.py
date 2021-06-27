@@ -121,10 +121,10 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
 
     # ROI table:
     minimal_roi = {
-        "0": 0.158,
-        "29": 0.039,
-        "50": 0.029,
-        "159": 0
+        "0": 0.05,
+        "29": 0.04,
+        "50": 0.03,
+        "159": 0.01
     }
 
     # Stoploss:
@@ -197,7 +197,7 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
     }
 
     # Trailing stop:
-    trailing_stop = True
+    trailing_stop = False
     trailing_stop_positive = 0.013
     trailing_stop_positive_offset = 0.042
     trailing_only_offset_is_reached = True
