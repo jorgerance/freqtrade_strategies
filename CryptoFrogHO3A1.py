@@ -18,13 +18,24 @@ from freqtrade.persistence import Trade
 from skopt.space import Dimension
 
 class CryptoFrogHO3A1(IStrategy):
-
-    # ROI table:
+    # Sell hyperspace params:
+    sell_params = {
+        "cstp_bail_how": "time",
+        "cstp_bail_roc": -0.017,
+        "cstp_bail_time": 1295,
+        "cstp_threshold": -0.041,
+        "droi_pullback": True,
+        "droi_pullback_amount": 0.005,
+        "droi_pullback_respect_table": False,
+        "droi_trend_type": "any",
+    }
+    
+    # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
     minimal_roi = {
-        "0": 0.233,
-        "35": 0.081,
-        "95": 0.014,
-        "212": 0
+        "0": 0.16,
+        "10": 0.087,
+        "70": 0.024,
+        "100": 0
     }
 
     # Stoploss:
@@ -32,9 +43,9 @@ class CryptoFrogHO3A1(IStrategy):
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.242
-    trailing_stop_positive_offset = 0.295
-    trailing_only_offset_is_reached = False
+    trailing_stop_positive = 0.225
+    trailing_stop_positive_offset = 0.275
+    trailing_only_offset_is_reached = True
     
     use_custom_stoploss = True
     custom_stop = {
