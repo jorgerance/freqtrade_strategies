@@ -19,12 +19,12 @@ from skopt.space import Dimension
 
 class CryptoFrogHO3A1(IStrategy):
 
-    # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
+    # ROI table:
     minimal_roi = {
-        "0": 0.087,
-        "38": 0.074,
-        "60": 0.037,
-        "170": 0
+        "0": 0.233,
+        "35": 0.081,
+        "95": 0.014,
+        "212": 0
     }
 
     # Stoploss:
@@ -32,9 +32,9 @@ class CryptoFrogHO3A1(IStrategy):
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.264
-    trailing_stop_positive_offset = 0.276
-    trailing_only_offset_is_reached = True
+    trailing_stop_positive = 0.242
+    trailing_stop_positive_offset = 0.295
+    trailing_only_offset_is_reached = False
     
     use_custom_stoploss = True
     custom_stop = {
