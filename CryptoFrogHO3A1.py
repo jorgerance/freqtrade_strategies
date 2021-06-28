@@ -20,31 +20,31 @@ from skopt.space import Dimension
 class CryptoFrogHO3A1(IStrategy):
     # Sell hyperspace params:
     sell_params = {
-        "cstp_bail_how": "time",
-        "cstp_bail_roc": -0.017,
-        "cstp_bail_time": 1295,
-        "cstp_threshold": -0.041,
+        "cstp_bail_how": "roc",
+        "cstp_bail_roc": -0.01,
+        "cstp_bail_time": 1310,
+        "cstp_threshold": 0.0,
         "droi_pullback": True,
-        "droi_pullback_amount": 0.005,
+        "droi_pullback_amount": 0.009,
         "droi_pullback_respect_table": False,
-        "droi_trend_type": "any",
+        "droi_trend_type": "rmi",
     }
-    
+
     # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
-    minimal_roi = {
-        "0": 0.068,
-        "10": 0.028,
-        "20": 0.012,
-        "79": 0
+     minimal_roi = {
+        "0": 0.053,
+        "18": 0.039,
+        "43": 0.024,
+        "60": 0
     }
 
     # Stoploss:
-    stoploss = -0.085
+    stoploss = -0.313
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.044
-    trailing_stop_positive_offset = 0.139
+    trailing_stop_positive = 0.342
+    trailing_stop_positive_offset = 0.417
     trailing_only_offset_is_reached = True
     
     use_custom_stoploss = True
