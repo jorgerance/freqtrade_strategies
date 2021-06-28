@@ -31,7 +31,7 @@ class CryptoFrogHO3A1(IStrategy):
     }
 
     # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
-     minimal_roi = {
+    minimal_roi = {
         "0": 0.053,
         "18": 0.039,
         "43": 0.024,
