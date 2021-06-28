@@ -85,16 +85,16 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
         "buy_condition_21_enable": True,
         # Hyperopt
         # Multi Offset
-        "base_nb_candles_buy": 5,
-        "buy_chop_min_19": 45.7,
-        "buy_rsi_1h_min_19": 47.2,
-        "ewo_high": 4.466,
-        "ewo_low": -18.637,
-        "low_offset_ema": 0.938,
-        "low_offset_kama": 0.935,
-        "low_offset_sma": 0.911,
-        "low_offset_t3": 0.928,
-        "low_offset_trima": 0.944
+        "base_nb_candles_buy": 50,
+        "buy_chop_min_19": 37.5,
+        "buy_rsi_1h_min_19": 50.7,
+        "ewo_high": 6.224,
+        "ewo_low": -16.961,
+        "low_offset_ema": 0.901,
+        "low_offset_kama": 0.915,
+        "low_offset_sma": 0.988,
+        "low_offset_t3": 0.985,
+        "low_offset_trima": 0.96,
     }
 
     sell_params = {
