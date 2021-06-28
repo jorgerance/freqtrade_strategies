@@ -85,16 +85,16 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
         "buy_condition_21_enable": True,
         # Hyperopt
         # Multi Offset
-        "base_nb_candles_buy": 60,
-        "buy_chop_min_19": 24.8,
-        "buy_rsi_1h_min_19": 42.4,
-        "ewo_high": 7.774,
-        "ewo_low": -16.41,
-        "low_offset_ema": 0.923,
-        "low_offset_kama": 0.91,
-        "low_offset_sma": 0.988,
-        "low_offset_t3": 0.949,
-        "low_offset_trima": 0.909
+        "base_nb_candles_buy": 19,
+        "buy_chop_min_19": 40.0,
+        "buy_rsi_1h_min_19": 63.7,
+        "ewo_high": 3.907,
+        "ewo_low": -18.499,
+        "low_offset_ema": 0.915,
+        "low_offset_kama": 0.954,
+        "low_offset_sma": 0.939,
+        "low_offset_t3": 0.917,
+        "low_offset_trima": 0.978,
     }
 
     sell_params = {
@@ -111,12 +111,12 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
         #############
         # Hyperopt
         # Multi Offset
-        "base_nb_candles_sell": 34,
+        "base_nb_candles_sell": 27,
         "high_offset_ema": 1.047,
-        "high_offset_kama": 1.07,
-        "high_offset_sma": 1.051,
-        "high_offset_t3": 0.999,
-        "high_offset_trima": 1.096
+        "high_offset_kama": 1.04,
+        "high_offset_sma": 0.999,
+        "high_offset_t3": 1.095,
+        "high_offset_trima": 1.047,
     }
 
     # ROI table:
