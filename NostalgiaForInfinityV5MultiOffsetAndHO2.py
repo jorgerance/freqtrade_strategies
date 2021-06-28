@@ -85,16 +85,16 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
         "buy_condition_21_enable": True,
         # Hyperopt
         # Multi Offset
-        "base_nb_candles_buy": 50,
-        "buy_chop_min_19": 37.5,
-        "buy_rsi_1h_min_19": 50.7,
-        "ewo_high": 6.224,
-        "ewo_low": -16.961,
-        "low_offset_ema": 0.901,
-        "low_offset_kama": 0.915,
-        "low_offset_sma": 0.988,
-        "low_offset_t3": 0.985,
-        "low_offset_trima": 0.96,
+        "base_nb_candles_buy": 80,
+        "buy_chop_min_19": 41.8,
+        "buy_rsi_1h_min_19": 51.4,
+        "ewo_high": 7.714,
+        "ewo_low": -16.744,
+        "low_offset_ema": 0.983,
+        "low_offset_kama": 0.962,
+        "low_offset_sma": 0.919,
+        "low_offset_t3": 0.975,
+        "low_offset_trima": 0.943,
     }
 
     sell_params = {
@@ -111,24 +111,20 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
         #############
         # Hyperopt
         # Multi Offset
-        "base_nb_candles_sell": 27,
-        "high_offset_ema": 1.047,
-        "high_offset_kama": 1.04,
-        "high_offset_sma": 0.999,
-        "high_offset_t3": 1.095,
-        "high_offset_trima": 1.047,
+        "base_nb_candles_sell": 39,
+        "high_offset_ema": 1.059,
+        "high_offset_kama": 1.081,
+        "high_offset_sma": 1.047,
+        "high_offset_t3": 1.072,
+        "high_offset_trima": 1.014,
     }
 
     # ROI table:
     minimal_roi = {
-        "0": 0.05,
-        "29": 0.04,
-        "50": 0.03,
-        "159": 0.01
+        "0": 0.01,
     }
 
-    # Stoploss:
-    stoploss = -0.326
+    stoploss = -0.99
 
     # Multi Offset
     base_nb_candles_buy = IntParameter(
@@ -196,11 +192,11 @@ class NostalgiaForInfinityV5MultiOffsetAndHO2(IStrategy):
         }
     }
 
-    # Trailing stop:
+    # Trailing stoploss (not used)
     trailing_stop = False
-    trailing_stop_positive = 0.013
-    trailing_stop_positive_offset = 0.042
     trailing_only_offset_is_reached = True
+    trailing_stop_positive = 0.01
+    trailing_stop_positive_offset = 0.03
 
     use_custom_stoploss = False
 
