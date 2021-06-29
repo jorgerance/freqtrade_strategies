@@ -2,7 +2,6 @@ import freqtrade.vendor.qtpylib.indicators as qtpylib
 import numpy as np
 import talib.abstract as ta
 from freqtrade.strategy.interface import IStrategy
-from freqtrade.strategy import stoploss_from_open, merge_informative_pair, DecimalParameter, IntParameter, CategoricalParameter
 from pandas import DataFrame
 from datetime import datetime, timedelta
 
@@ -47,65 +46,32 @@ from datetime import datetime, timedelta
 
 """
 
-# Buy hyperspace params:
-buy_params = {
-    "base_nb_candles_buy": 16,
-    "ewo_high": 7.486,
-    "ewo_low": -8.405,
-    "low_offset": 0.955,
-    "rsi_buy": 58,
-}
-
-# Sell hyperspace params:
-sell_params = {
-    "base_nb_candles_sell": 6,
-    "high_offset": 0.998,
-}
 
 class NormalizerStrategyHO2(IStrategy):
     INTERFACE_VERSION = 2
 
-    # ROI table:
     minimal_roi = {
-        "0": 0.463,
-        "289": 0.174,
-        "995": 0.087,
-        "1638": 0
+        "0": 0.35,
+        "405": 0.248,
+        "875": 0.091,
+        "1585": 0
     }
-    # Stoploss:
-    stoploss = -0.331
+
+    stoploss = -0.99 # effectively disabled.
 
     timeframe = '1h'
 
-    base_nb_candles_buy = IntParameter(
-        5, 80, default=buy_params['base_nb_candles_buy'], space='buy', optimize=True)
-    base_nb_candles_sell = IntParameter(
-        5, 80, default=sell_params['base_nb_candles_sell'], space='sell', optimize=True)
-    low_offset = DecimalParameter(
-        0.9, 0.99, default=buy_params['low_offset'], space='buy', optimize=True)
-    high_offset = DecimalParameter(
-        0.99, 1.1, default=sell_params['high_offset'], space='sell', optimize=True)
-
-    # Protection
-    fast_ewo = 50
-    slow_ewo = 200
-    ewo_low = DecimalParameter(-20.0, -8.0,
-                               default=buy_params['ewo_low'], space='buy', optimize=True)
-    ewo_high = DecimalParameter(
-        2.0, 12.0, default=buy_params['ewo_high'], space='buy', optimize=True)
-    rsi_buy = IntParameter(30, 70, default=buy_params['rsi_buy'], space='buy', optimize=True)
-
     # Sell signal
     use_sell_signal = True
-    sell_profit_only = False
+    sell_profit_only = True
     sell_profit_offset = 0.001 # it doesn't meant anything, just to guarantee there is a minimal profit.
     ignore_roi_if_buy_signal = True
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.251
-    trailing_stop_positive_offset = 0.324
-    trailing_only_offset_is_reached = True
+    trailing_stop_positive = 0.3
+    trailing_stop_positive_offset = 0.379
+    trailing_only_offset_is_reached = False
 
     # Custom stoploss
     use_custom_stoploss = True
