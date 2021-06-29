@@ -103,5 +103,9 @@
     "forcebuy_enable": false,
     "internals": {
         "process_throttle_secs": 5
-    }
+    },
+    "db_url": "sqlite:////freqtrade/user_data/tradesv3.sqlite",
+    "user_data_dir" : "user_data",
+    "strategy": "CryptoFrogHO3A1",
+    "strategy_path": "user_data/strategies"
 }
