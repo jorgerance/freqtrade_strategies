@@ -2925,6 +2925,36 @@ class CryptoFrogNFI(IStrategy):
                 'sell'
             ] = 1
 
+        dataframe.loc[
+            (
+                (
+                    ## close ALWAYS needs to be higher than the heiken high at 5m
+                    (dataframe['close'] > dataframe['Smooth_HA_H'])
+                    &
+                    ## Hansen's HA EMA at informative timeframe
+                    (dataframe['emac_1h'] > dataframe['emao_1h'])
+                )
+                &
+                (
+                    ## try to find oversold regions with a corresponding BB expansion
+                    (
+                        (dataframe['bbw_expansion'] == 1)
+                        &
+                        (
+                            (dataframe['mfi'] > 80)
+                            |
+                            (dataframe['dmi_plus'] > 30)
+                        )
+                    )
+                    ## volume sanity checks
+                    &
+                    (dataframe['vfi'] > 0.0)
+                    &
+                    (dataframe['volume'] > 0)                    
+                )
+            ),
+            'sell'] = 1
+            
         return dataframe
 
 
