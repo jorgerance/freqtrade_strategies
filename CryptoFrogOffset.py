@@ -1826,6 +1826,46 @@ class CryptoFrogOffset(IStrategy):
 
         return informative_1h
 
+    def range_percent_change(self, dataframe: DataFrame, length: int) -> float:
+        """
+        Rolling Percentage Change Maximum across interval.
+
+        :param dataframe: DataFrame The original OHLC dataframe
+        :param length: int The length to look back
+        """
+        df = dataframe.copy()
+        return ((df['open'].rolling(length).max() - df['close'].rolling(length).min()) / df['close'].rolling(length).min())
+
+    def range_maxgap(self, dataframe: DataFrame, length: int) -> float:
+        """
+        Maximum Price Gap across interval.
+
+        :param dataframe: DataFrame The original OHLC dataframe
+        :param length: int The length to look back
+        """
+        df = dataframe.copy()
+        return (df['open'].rolling(length).max() - df['close'].rolling(length).min())
+
+    def range_maxgap_adjusted(self, dataframe: DataFrame, length: int, adjustment: float) -> float:
+        """
+        Maximum Price Gap across interval adjusted.
+
+        :param dataframe: DataFrame The original OHLC dataframe
+        :param length: int The length to look back
+        :param adjustment: int The adjustment to be applied
+        """
+        return (self.range_maxgap(dataframe,length) / adjustment)
+
+    def range_height(self, dataframe: DataFrame, length: int) -> float:
+        """
+        Current close distance to range bottom.
+
+        :param dataframe: DataFrame The original OHLC dataframe
+        :param length: int The length to look back
+        """
+        df = dataframe.copy()
+        return (df['close'] - df['close'].rolling(length).min())
+
     def safe_pump(self, dataframe: DataFrame, length: int, thresh: float, pull_thresh: float) -> bool:
         """
         Determine if entry after a pump is safe.
