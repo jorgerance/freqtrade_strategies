@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 from cachetools import TTLCache
+from functools import reduce
 
 ## I hope you know what these are already
 from pandas import DataFrame
