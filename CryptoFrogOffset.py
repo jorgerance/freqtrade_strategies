@@ -35,6 +35,9 @@ class CryptoFrogOffset(IStrategy):
     trailing_stop_positive = 0.01
     trailing_stop_positive_offset = 0.047
     trailing_only_offset_is_reached = False
+
+    # Number of candles the strategy requires before producing valid signals
+    startup_candle_count: int = 400
     
     use_custom_stoploss = False
     custom_stop = {
@@ -575,6 +578,59 @@ class CryptoFrogOffset(IStrategy):
         
         return dataframe
 
+    def informative_1h_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        assert self.dp, "DataProvider is required for multiple timeframes."
+        # Get the informative pair
+        informative_1h = self.dp.get_pair_dataframe(pair=metadata['pair'], timeframe=self.inf_1h)
+
+        # EMA
+        informative_1h['ema_15'] = ta.EMA(informative_1h, timeperiod=15)
+        informative_1h['ema_20'] = ta.EMA(informative_1h, timeperiod=20)
+        informative_1h['ema_26'] = ta.EMA(informative_1h, timeperiod=26)
+        informative_1h['ema_50'] = ta.EMA(informative_1h, timeperiod=50)
+        informative_1h['ema_100'] = ta.EMA(informative_1h, timeperiod=100)
+        informative_1h['ema_200'] = ta.EMA(informative_1h, timeperiod=200)
+
+        # SMA
+        informative_1h['sma_200'] = ta.SMA(informative_1h, timeperiod=200)
+        informative_1h['sma_200_dec'] = informative_1h['sma_200'] < informative_1h['sma_200'].shift(20)
+
+        # RSI
+        informative_1h['rsi'] = ta.RSI(informative_1h, timeperiod=14)
+
+        # BB
+        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(informative_1h), window=20, stds=2)
+        informative_1h['bb_lowerband'] = bollinger['lower']
+        informative_1h['bb_middleband'] = bollinger['mid']
+        informative_1h['bb_upperband'] = bollinger['upper']
+
+        # Pump protections
+        informative_1h['safe_pump_24_normal'] = self.safe_pump(informative_1h, 24, self.buy_pump_threshold_1.value, self.buy_pump_pull_threshold_1.value)
+        informative_1h['safe_pump_36_normal'] = self.safe_pump(informative_1h, 36, self.buy_pump_threshold_2.value, self.buy_pump_pull_threshold_2.value)
+        informative_1h['safe_pump_48_normal'] = self.safe_pump(informative_1h, 48, self.buy_pump_threshold_3.value, self.buy_pump_pull_threshold_3.value)
+
+        informative_1h['safe_pump_24_strict'] = self.safe_pump(informative_1h, 24, self.buy_pump_threshold_4.value, self.buy_pump_pull_threshold_4.value)
+        informative_1h['safe_pump_36_strict'] = self.safe_pump(informative_1h, 36, self.buy_pump_threshold_5.value, self.buy_pump_pull_threshold_5.value)
+        informative_1h['safe_pump_48_strict'] = self.safe_pump(informative_1h, 48, self.buy_pump_threshold_6.value, self.buy_pump_pull_threshold_6.value)
+
+        informative_1h['safe_pump_24_loose'] = self.safe_pump(informative_1h, 24, self.buy_pump_threshold_7.value, self.buy_pump_pull_threshold_7.value)
+        informative_1h['safe_pump_36_loose'] = self.safe_pump(informative_1h, 36, self.buy_pump_threshold_8.value, self.buy_pump_pull_threshold_8.value)
+        informative_1h['safe_pump_48_loose'] = self.safe_pump(informative_1h, 48, self.buy_pump_threshold_9.value, self.buy_pump_pull_threshold_9.value)
+
+        informative_1h['sell_pump_48_1'] = (((informative_1h['high'].rolling(48).max() - informative_1h['low'].rolling(48).min()) / informative_1h['low'].rolling(48).min()) > self.sell_pump_threshold_1.value)
+        informative_1h['sell_pump_48_2'] = (((informative_1h['high'].rolling(48).max() - informative_1h['low'].rolling(48).min()) / informative_1h['low'].rolling(48).min()) > self.sell_pump_threshold_2.value)
+        informative_1h['sell_pump_48_3'] = (((informative_1h['high'].rolling(48).max() - informative_1h['low'].rolling(48).min()) / informative_1h['low'].rolling(48).min()) > self.sell_pump_threshold_3.value)
+
+        informative_1h['sell_pump_36_1'] = (((informative_1h['high'].rolling(36).max() - informative_1h['low'].rolling(36).min()) / informative_1h['low'].rolling(36).min()) > self.sell_pump_threshold_4.value)
+        informative_1h['sell_pump_36_2'] = (((informative_1h['high'].rolling(36).max() - informative_1h['low'].rolling(36).min()) / informative_1h['low'].rolling(36).min()) > self.sell_pump_threshold_5.value)
+        informative_1h['sell_pump_36_3'] = (((informative_1h['high'].rolling(36).max() - informative_1h['low'].rolling(36).min()) / informative_1h['low'].rolling(36).min()) > self.sell_pump_threshold_6.value)
+
+        informative_1h['sell_pump_24_1'] = (((informative_1h['high'].rolling(24).max() - informative_1h['low'].rolling(24).min()) / informative_1h['low'].rolling(24).min()) > self.sell_pump_threshold_7.value)
+        informative_1h['sell_pump_24_2'] = (((informative_1h['high'].rolling(24).max() - informative_1h['low'].rolling(24).min()) / informative_1h['low'].rolling(24).min()) > self.sell_pump_threshold_8.value)
+        informative_1h['sell_pump_24_3'] = (((informative_1h['high'].rolling(24).max() - informative_1h['low'].rolling(24).min()) / informative_1h['low'].rolling(24).min()) > self.sell_pump_threshold_9.value)
+
+        return informative_1h
+
     ## stolen from Obelisk's Ichi strat code and backtest blog post, and Solipsis4
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # Populate/update the trade data if there is any, set trades to false if not live/dry
@@ -606,6 +662,11 @@ class CryptoFrogOffset(IStrategy):
             self.custom_trade_info[metadata['pair']]['ssl-dir'] = dataframe[['date', 'ssl-dir']].copy().set_index('date')
             self.custom_trade_info[metadata['pair']]['rmi-up-trend'] = dataframe[['date', 'rmi-up-trend']].copy().set_index('date')
             self.custom_trade_info[metadata['pair']]['candle-up-trend'] = dataframe[['date', 'candle-up-trend']].copy().set_index('date')            
+        
+        # The indicators for the 1h informative timeframe
+        informative_1h = self.informative_1h_indicators(dataframe, metadata)
+
+        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.inf_1h, ffill=True)
             
         return dataframe
 
