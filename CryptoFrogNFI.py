@@ -22,25 +22,25 @@ class CryptoFrogNFI(IStrategy):
 
     # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
     minimal_roi = {
-        "0": 0.213,
-        "39": 0.103,
-        "96": 0.037,
-        "166": 0
+        "0": 0.143,
+        "10": 0.022,
+        "20": 0.011,
+        "53": 0
     }
 
     # Stoploss:
-    stoploss = -0.085
+    stoploss = -0.299
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.01
-    trailing_stop_positive_offset = 0.047
-    trailing_only_offset_is_reached = False
+    trailing_stop_positive = 0.024
+    trailing_stop_positive_offset = 0.117
+    trailing_only_offset_is_reached = True
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 400
     
-    use_custom_stoploss = False
+    use_custom_stoploss = True
     custom_stop = {
         # Linear Decay Parameters
         'decay-time': 166,       # minutes to reach end, I find it works well to match this to the final ROI value - default 1080
@@ -77,7 +77,7 @@ class CryptoFrogNFI(IStrategy):
     custom_current_price_cache: TTLCache = TTLCache(maxsize=100, ttl=300) # 5 minutes
         
     # run "populate_indicators" only for new candle
-    process_only_new_candles = True
+    process_only_new_candles = False
 
     # Experimental settings (configuration will overide these if set)
     use_sell_signal = True
@@ -2954,7 +2954,7 @@ class CryptoFrogNFI(IStrategy):
                 )
             ),
             'sell'] = 1
-            
+
         return dataframe
 
 
