@@ -1947,8 +1947,6 @@ class CryptoFrogOffset(IStrategy):
         # The indicators for the 1h informative timeframe
         informative_1h = self.informative_1h_indicators(dataframe, metadata)
 
-        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.informative_timeframe, ffill=True)
-
         # Populate/update the trade data if there is any, set trades to false if not live/dry
         self.custom_trade_info[metadata['pair']] = self.populate_trades(metadata['pair'])
         
@@ -1979,9 +1977,11 @@ class CryptoFrogOffset(IStrategy):
             self.custom_trade_info[metadata['pair']]['rmi-up-trend'] = dataframe[['date', 'rmi-up-trend']].copy().set_index('date')
             self.custom_trade_info[metadata['pair']]['candle-up-trend'] = dataframe[['date', 'candle-up-trend']].copy().set_index('date')            
         
+        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.informative_timeframe, ffill=True)
+        
         # The indicators for the normal (5m) timeframe
         dataframe = self.normal_tf_indicators(dataframe, metadata)
-        
+
         return dataframe
 
     ## cryptofrog signals
