@@ -1878,11 +1878,77 @@ class CryptoFrogOffset(IStrategy):
         df = dataframe.copy()
         return (self.range_percent_change(df, length) < thresh) | (self.range_maxgap_adjusted(df, length, pull_thresh) > self.range_height(df, length))
 
+    def normal_tf_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        # BB 40
+        bb_40 = qtpylib.bollinger_bands(dataframe['close'], window=40, stds=2)
+        dataframe['lower'] = bb_40['lower']
+        dataframe['mid'] = bb_40['mid']
+        dataframe['bbdelta'] = (bb_40['mid'] - dataframe['lower']).abs()
+        dataframe['closedelta'] = (dataframe['close'] - dataframe['close'].shift()).abs()
+        dataframe['tail'] = (dataframe['close'] - dataframe['low']).abs()
+
+        # BB 20
+        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
+        dataframe['bb_lowerband'] = bollinger['lower']
+        dataframe['bb_middleband'] = bollinger['mid']
+        dataframe['bb_upperband'] = bollinger['upper']
+
+        # EMA 200
+        dataframe['ema_12'] = ta.EMA(dataframe, timeperiod=12)
+        dataframe['ema_20'] = ta.EMA(dataframe, timeperiod=20)
+        dataframe['ema_26'] = ta.EMA(dataframe, timeperiod=26)
+        dataframe['ema_50'] = ta.EMA(dataframe, timeperiod=50)
+        dataframe['ema_100'] = ta.EMA(dataframe, timeperiod=100)
+        dataframe['ema_200'] = ta.EMA(dataframe, timeperiod=200)
+
+        # SMA
+        dataframe['sma_5'] = ta.SMA(dataframe, timeperiod=5)
+        dataframe['sma_30'] = ta.SMA(dataframe, timeperiod=30)
+        dataframe['sma_200'] = ta.SMA(dataframe, timeperiod=200)
+
+        dataframe['sma_200_dec'] = dataframe['sma_200'] < dataframe['sma_200'].shift(20)
+
+        # MFI
+        dataframe['mfi'] = ta.MFI(dataframe)
+
+        # EWO
+        dataframe['ewo'] = EWO(dataframe, 50, 200)
+
+        # RSI
+        dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
+
+        # Chopiness
+        dataframe['chop']= qtpylib.chopiness(dataframe, 14)
+
+        # Dip protection
+        dataframe['safe_dips_normal'] = ((((dataframe['open'] - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_1.value) &
+                                  (((dataframe['open'].rolling(2).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_2.value) &
+                                  (((dataframe['open'].rolling(12).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_3.value) &
+                                  (((dataframe['open'].rolling(144).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_4.value))
+
+        dataframe['safe_dips_strict'] = ((((dataframe['open'] - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_5.value) &
+                                  (((dataframe['open'].rolling(2).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_6.value) &
+                                  (((dataframe['open'].rolling(12).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_7.value) &
+                                  (((dataframe['open'].rolling(144).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_8.value))
+
+        dataframe['safe_dips_loose'] = ((((dataframe['open'] - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_9.value) &
+                                  (((dataframe['open'].rolling(2).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_10.value) &
+                                  (((dataframe['open'].rolling(12).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_11.value) &
+                                  (((dataframe['open'].rolling(144).max() - dataframe['close']) / dataframe['close']) < self.buy_dip_threshold_12.value))
+
+        # Volume
+        dataframe['volume_mean_4'] = dataframe['volume'].rolling(4).mean().shift(1)
+        dataframe['volume_mean_30'] = dataframe['volume'].rolling(30).mean()
+
+        return dataframe
+
     ## stolen from Obelisk's Ichi strat code and backtest blog post, and Solipsis4
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # The indicators for the 1h informative timeframe
         informative_1h = self.informative_1h_indicators(dataframe, metadata)
-        
+
+        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.informative_timeframe, ffill=True)
+
         # Populate/update the trade data if there is any, set trades to false if not live/dry
         self.custom_trade_info[metadata['pair']] = self.populate_trades(metadata['pair'])
         
@@ -1913,8 +1979,9 @@ class CryptoFrogOffset(IStrategy):
             self.custom_trade_info[metadata['pair']]['rmi-up-trend'] = dataframe[['date', 'rmi-up-trend']].copy().set_index('date')
             self.custom_trade_info[metadata['pair']]['candle-up-trend'] = dataframe[['date', 'candle-up-trend']].copy().set_index('date')            
         
-        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.informative_timeframe, ffill=True)
-
+        # The indicators for the normal (5m) timeframe
+        dataframe = self.normal_tf_indicators(dataframe, metadata)
+        
         return dataframe
 
     ## cryptofrog signals
