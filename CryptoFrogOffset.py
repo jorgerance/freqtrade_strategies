@@ -581,7 +581,7 @@ class CryptoFrogOffset(IStrategy):
     def informative_1h_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         assert self.dp, "DataProvider is required for multiple timeframes."
         # Get the informative pair
-        informative_1h = self.dp.get_pair_dataframe(pair=metadata['pair'], timeframe=self.inf_1h)
+        informative_1h = self.dp.get_pair_dataframe(pair=metadata['pair'], timeframe=self.informative_timeframe)
 
         # EMA
         informative_1h['ema_15'] = ta.EMA(informative_1h, timeperiod=15)
@@ -666,7 +666,7 @@ class CryptoFrogOffset(IStrategy):
         # The indicators for the 1h informative timeframe
         informative_1h = self.informative_1h_indicators(dataframe, metadata)
 
-        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.inf_1h, ffill=True)
+        dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.informative_timeframe, ffill=True)
             
         return dataframe
 
