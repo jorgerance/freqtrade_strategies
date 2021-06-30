@@ -4,7 +4,7 @@ from cachetools import TTLCache
 from functools import reduce
 
 ## I hope you know what these are already
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import numpy as np
 
 ## Indicator libs
@@ -1000,7 +1000,7 @@ class CryptoFrogNFI(IStrategy):
     sell_custom_stoploss_pump_ma_offset_3 = DecimalParameter(0.7, 0.99, default=0.88, space='sell', decimals=2, optimize=False, load=True)
 
     #############################################################
-    
+
     def custom_sell(self, pair: str, trade: 'Trade', current_time: 'datetime', current_rate: float,
                     current_profit: float, **kwargs):
         dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
