@@ -33,10 +33,10 @@ class CryptoFrogNFI(IStrategy):
 
     # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
     minimal_roi = {
-        "0": 0.14,
-        "34": 0.095,
-        "50": 0.027,
-        "71": 0
+        "0": 0.191,
+        "35": 0.025,
+        "77": 0.012,
+        "188": 0
     }
 
     # Stoploss:
@@ -44,8 +44,8 @@ class CryptoFrogNFI(IStrategy):
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.023
-    trailing_stop_positive_offset = 0.093
+    trailing_stop_positive = 0.278
+    trailing_stop_positive_offset = 0.338
     trailing_only_offset_is_reached = True
 
     # Number of candles the strategy requires before producing valid signals
