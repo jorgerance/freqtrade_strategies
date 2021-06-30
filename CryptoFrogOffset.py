@@ -1342,7 +1342,7 @@ class CryptoFrogOffset(IStrategy):
     buy_ewo_23 = DecimalParameter(2.0, 10.0, default=7.0, space='buy', decimals=1, optimize=False, load=True)
     buy_rsi_23 = DecimalParameter(20.0, 40.0, default=30.0, space='buy', decimals=1, optimize=False, load=True)
     buy_rsi_1h_23 = DecimalParameter(60.0, 80.0, default=70.0, space='buy', decimals=1, optimize=False, load=True)
-    
+
     # Sell
 
     sell_condition_1_enable = CategoricalParameter([True, False], default=True, space='sell', optimize=False, load=True)
@@ -1825,6 +1825,18 @@ class CryptoFrogOffset(IStrategy):
         informative_1h['sell_pump_24_3'] = (((informative_1h['high'].rolling(24).max() - informative_1h['low'].rolling(24).min()) / informative_1h['low'].rolling(24).min()) > self.sell_pump_threshold_9.value)
 
         return informative_1h
+
+    def safe_pump(self, dataframe: DataFrame, length: int, thresh: float, pull_thresh: float) -> bool:
+        """
+        Determine if entry after a pump is safe.
+
+        :param dataframe: DataFrame The original OHLC dataframe
+        :param length: int The length to look back
+        :param thresh: int Maximum percentage change threshold
+        :param pull_thresh: int Pullback from interval maximum threshold
+        """
+        df = dataframe.copy()
+        return (self.range_percent_change(df, length) < thresh) | (self.range_maxgap_adjusted(df, length, pull_thresh) > self.range_height(df, length))
 
     ## stolen from Obelisk's Ichi strat code and backtest blog post, and Solipsis4
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
