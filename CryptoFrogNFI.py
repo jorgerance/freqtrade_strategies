@@ -22,11 +22,11 @@ class CryptoFrogNFI(IStrategy):
     # Sell hyperspace params:
     sell_params = {
         "cstp_bail_how": "roc",
-        "cstp_bail_roc": -0.01,
-        "cstp_bail_time": 1310,
+        "cstp_bail_roc": -0.016,
+        "cstp_bail_time": 901,
         "cstp_threshold": 0.0,
-        "droi_pullback": True,
-        "droi_pullback_amount": 0.009,
+        "droi_pullback": False,
+        "droi_pullback_amount": 0.008,
         "droi_pullback_respect_table": False,
         "droi_trend_type": "rmi",
     }
