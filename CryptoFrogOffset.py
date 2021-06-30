@@ -1880,6 +1880,9 @@ class CryptoFrogOffset(IStrategy):
 
     ## stolen from Obelisk's Ichi strat code and backtest blog post, and Solipsis4
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        # The indicators for the 1h informative timeframe
+        informative_1h = self.informative_1h_indicators(dataframe, metadata)
+        
         # Populate/update the trade data if there is any, set trades to false if not live/dry
         self.custom_trade_info[metadata['pair']] = self.populate_trades(metadata['pair'])
         
@@ -1910,9 +1913,6 @@ class CryptoFrogOffset(IStrategy):
             self.custom_trade_info[metadata['pair']]['rmi-up-trend'] = dataframe[['date', 'rmi-up-trend']].copy().set_index('date')
             self.custom_trade_info[metadata['pair']]['candle-up-trend'] = dataframe[['date', 'candle-up-trend']].copy().set_index('date')            
         
-        # The indicators for the 1h informative timeframe
-        informative_1h = self.informative_1h_indicators(dataframe, metadata)
-
         dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.informative_timeframe, ffill=True)
 
         return dataframe
