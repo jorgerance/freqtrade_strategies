@@ -69,6 +69,8 @@ class NFI4Frog(IStrategy):
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = True
 
+    custom_trade_info = {}
+    
     # These values can be overridden in the "ask_strategy" section in the config.
     use_sell_signal = True
     sell_profit_only = False
