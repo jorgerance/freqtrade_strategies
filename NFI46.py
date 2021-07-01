@@ -1,17 +1,13 @@
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 import numpy as np
 import talib.abstract as ta
-from typing import Dict, List, Optional, Tuple
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy import (merge_informative_pair,
                                 DecimalParameter, IntParameter, CategoricalParameter)
 from pandas import DataFrame, Series
 from functools import reduce
-from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.persistence import Trade
-from datetime import datetime, timedelta
-from cachetools import TTLCache
-from skopt.space import Dimension
+from datetime import datetime
 
 
 ###########################################################################################################
@@ -477,126 +473,6 @@ class NFI46(IStrategy):
     sell_custom_stoploss_pump_ma_offset_3 = DecimalParameter(0.7, 0.99, default=0.88, space='sell', decimals=2, optimize=False, load=True)
 
     #############################################################
-
-    ## smoothed Heiken Ashi
-    def HA(self, dataframe, smoothing=None):
-        df = dataframe.copy()
-
-        df['HA_Close']=(df['open'] + df['high'] + df['low'] + df['close'])/4
-
-        df.reset_index(inplace=True)
-
-        ha_open = [ (df['open'][0] + df['close'][0]) / 2 ]
-        [ ha_open.append((ha_open[i] + df['HA_Close'].values[i]) / 2) for i in range(0, len(df)-1) ]
-        df['HA_Open'] = ha_open
-
-        df.set_index('index', inplace=True)
-
-        df['HA_High']=df[['HA_Open','HA_Close','high']].max(axis=1)
-        df['HA_Low']=df[['HA_Open','HA_Close','low']].min(axis=1)
-
-        if smoothing is not None:
-            sml = abs(int(smoothing))
-            if sml > 0:
-                df['Smooth_HA_O']=ta.EMA(df['HA_Open'], sml)
-                df['Smooth_HA_C']=ta.EMA(df['HA_Close'], sml)
-                df['Smooth_HA_H']=ta.EMA(df['HA_High'], sml)
-                df['Smooth_HA_L']=ta.EMA(df['HA_Low'], sml)
-                
-        return df
-    
-    def hansen_HA(self, informative_df, period=6):
-        dataframe = informative_df.copy()
-        
-        dataframe['hhclose']=(dataframe['open'] + dataframe['high'] + dataframe['low'] + dataframe['close']) / 4
-        dataframe['hhopen']= ((dataframe['open'].shift(2) + dataframe['close'].shift(2))/ 2) #it is not the same as real heikin ashi since I found that this is better.
-        dataframe['hhhigh']=dataframe[['open','close','high']].max(axis=1)
-        dataframe['hhlow']=dataframe[['open','close','low']].min(axis=1)
-
-        dataframe['emac'] = ta.SMA(dataframe['hhclose'], timeperiod=period) #to smooth out the data and thus less noise.
-        dataframe['emao'] = ta.SMA(dataframe['hhopen'], timeperiod=period)
-        
-        return {'emac': dataframe['emac'], 'emao': dataframe['emao']}
-    
-    ## detect BB width expansion to indicate possible volatility
-    def bbw_expansion(self, bbw_rolling, mult=1.1):
-        bbw = list(bbw_rolling)
-
-        m = 0.0
-        for i in range(len(bbw)-1):
-            if bbw[i] > m:
-                m = bbw[i]
-
-        if (bbw[-1] > (m * mult)):
-            return 1
-        return 0
-
-    ## do_indicator style a la Obelisk strategies
-    def do_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Stoch fast - mainly due to 5m timeframes
-        stoch_fast = ta.STOCHF(dataframe)
-        dataframe['fastd'] = stoch_fast['fastd']
-        dataframe['fastk'] = stoch_fast['fastk']        
-        
-        #StochRSI for double checking things
-        period = 14
-        smoothD = 3
-        SmoothK = 3
-        dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
-        stochrsi  = (dataframe['rsi'] - dataframe['rsi'].rolling(period).min()) / (dataframe['rsi'].rolling(period).max() - dataframe['rsi'].rolling(period).min())
-        dataframe['srsi_k'] = stochrsi.rolling(SmoothK).mean() * 100
-        dataframe['srsi_d'] = dataframe['srsi_k'].rolling(smoothD).mean()
-
-        # Bollinger Bands because obviously
-        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=1)
-        dataframe['bb_lowerband'] = bollinger['lower']
-        dataframe['bb_middleband'] = bollinger['mid']
-        dataframe['bb_upperband'] = bollinger['upper']
-        
-        # SAR Parabol - probably don't need this
-        dataframe['sar'] = ta.SAR(dataframe)
-        
-        ## confirm wideboi variance signal with bbw expansion
-        dataframe["bb_width"] = ((dataframe["bb_upperband"] - dataframe["bb_lowerband"]) / dataframe["bb_middleband"])
-        dataframe['bbw_expansion'] = dataframe['bb_width'].rolling(window=4).apply(self.bbw_expansion)
-
-        # confirm entry and exit on smoothed HA
-        dataframe = self.HA(dataframe, 4)
-
-        # thanks to Hansen_Khornelius for this idea that I apply to the 1hr informative
-        # https://github.com/hansen1015/freqtrade_strategy
-        hansencalc = self.hansen_HA(dataframe, 6)
-        dataframe['emac'] = hansencalc['emac']
-        dataframe['emao'] = hansencalc['emao']
-        
-        # money flow index (MFI) for in/outflow of money, like RSI adjusted for vol
-        dataframe['mfi'] = fta.MFI(dataframe)
-        
-        ## sqzmi to detect quiet periods
-        dataframe['sqzmi'] = fta.SQZMI(dataframe) #, MA=hansencalc['emac'])
-        
-        # Volume Flow Indicator (MFI) for volume based on the direction of price movement
-        dataframe['vfi'] = fta.VFI(dataframe, period=14)
-        
-        dmi = fta.DMI(dataframe, period=14)
-        dataframe['dmi_plus'] = dmi['DI+']
-        dataframe['dmi_minus'] = dmi['DI-']
-        dataframe['adx'] = fta.ADX(dataframe, period=14)
-        
-        ## for stoploss - all from Solipsis4
-        ## simple ATR and ROC for stoploss
-        dataframe['atr'] = ta.ATR(dataframe, timeperiod=14)
-        dataframe['roc'] = ta.ROC(dataframe, timeperiod=9)        
-        dataframe['rmi'] = RMI(dataframe, length=24, mom=5)
-        ssldown, sslup = SSLChannels_ATR(dataframe, length=21)
-        dataframe['sroc'] = SROC(dataframe, roclen=21, emalen=13, smooth=21)
-        dataframe['ssl-dir'] = np.where(sslup > ssldown,'up','down')        
-        dataframe['rmi-up'] = np.where(dataframe['rmi'] >= dataframe['rmi'].shift(),1,0)      
-        dataframe['rmi-up-trend'] = np.where(dataframe['rmi-up'].rolling(5).sum() >= 3,1,0) 
-        dataframe['candle-up'] = np.where(dataframe['close'] >= dataframe['close'].shift(),1,0)
-        dataframe['candle-up-trend'] = np.where(dataframe['candle-up'].rolling(5).sum() >= 3,1,0)        
-        
-        return dataframe
 
     def get_ticker_indicator(self):
         return int(self.timeframe[:-1])
@@ -1379,89 +1255,6 @@ class NFI46(IStrategy):
 
         return dataframe
 
-    def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime, current_rate: float, current_profit: float, **kwargs) -> float:
-        # Manage losing trades and open room for better ones.
-
-        if (current_profit > 0):
-            return 0.99
-        else:
-            trade_time_50 = current_time - timedelta(minutes=50)
-
-            # Trade open more then 60 minutes. For this strategy it's means -> loss
-            # Let's try to minimize the loss
-
-            if (trade_time_50 > trade.open_date_utc):
-
-                try:
-                    number_of_candle_shift = int((trade_time_50 - trade.open_date_utc).total_seconds() / 300)
-                    dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
-                    candle = dataframe.iloc[-number_of_candle_shift].squeeze()
-
-                    # We are at bottom. Wait...
-                    if candle['rsi_1h'] < 35:
-                        return 0.99
-
-                    # Are we still sinking? 
-                    if candle['close'] > candle['ema_200']:
-                        if current_rate * 1.025 < candle['open']:
-                            return 0.01 
-
-                    if current_rate * 1.015 < candle['open']:
-                        return 0.01
-
-                except IndexError as error:
-
-                    # Whoops, set stoploss at 10%
-                    return 0.5
-
-        return 0.99
-
-    # Get the current price from the exchange (or local cache)
-    def get_current_price(self, pair: str, refresh: bool) -> float:
-        if not refresh:
-            rate = self.custom_current_price_cache.get(pair)
-            # Check if cache has been invalidated
-            if rate:
-                return rate
-
-        ask_strategy = self.config.get('ask_strategy', {})
-        if ask_strategy.get('use_order_book', False):
-            ob = self.dp.orderbook(pair, 1)
-            rate = ob[f"{ask_strategy['price_side']}s"][0][0]
-        else:
-            ticker = self.dp.ticker(pair)
-            rate = ticker['last']
-
-        self.custom_current_price_cache[pair] = rate
-        return rate    
-    
-    """
-    Stripped down version from Schism, meant only to update the price data a bit
-    more frequently than the default instead of getting all sorts of trade information
-    """
-    def populate_trades(self, pair: str) -> dict:
-        # Initialize the trades dict if it doesn't exist, persist it otherwise
-        if not pair in self.custom_trade_info:
-            self.custom_trade_info[pair] = {}
-
-        # init the temp dicts and set the trade stuff to false
-        trade_data = {}
-        trade_data['active_trade'] = False
-
-        # active trade stuff only works in live and dry, not backtest
-        if self.config['runmode'].value in ('live', 'dry_run'):
-            
-            # find out if we have an open trade for this pair
-            active_trade = Trade.get_trades([Trade.pair == pair, Trade.is_open.is_(True),]).all()
-
-            # if so, get some information
-            if active_trade:
-                # get current price and update the min/max rate
-                current_rate = self.get_current_price(pair, True)
-                active_trade[0].adjust_min_max_rates(current_rate)
-
-        return trade_data
-
 # Elliot Wave Oscillator
 def EWO(dataframe, sma1_length=5, sma2_length=35):
     df = dataframe.copy()
@@ -1491,47 +1284,3 @@ def chaikin_money_flow(dataframe, n=20, fillna=False):
     if fillna:
         cmf = cmf.replace([np.inf, -np.inf], np.nan).fillna(0)
     return Series(cmf, name='cmf')
-
-def RMI(dataframe, *, length=20, mom=5):
-    """
-    Source: https://github.com/freqtrade/technical/blob/master/technical/indicators/indicators.py#L912
-    """
-    df = dataframe.copy()
-
-    df['maxup'] = (df['close'] - df['close'].shift(mom)).clip(lower=0)
-    df['maxdown'] = (df['close'].shift(mom) - df['close']).clip(lower=0)
-
-    df.fillna(0, inplace=True)
-
-    df["emaInc"] = ta.EMA(df, price='maxup', timeperiod=length)
-    df["emaDec"] = ta.EMA(df, price='maxdown', timeperiod=length)
-
-    df['RMI'] = np.where(df['emaDec'] == 0, 0, 100 - 100 / (1 + df["emaInc"] / df["emaDec"]))
-
-    return df["RMI"]
-
-def SSLChannels_ATR(dataframe, length=7):
-    """
-    SSL Channels with ATR: https://www.tradingview.com/script/SKHqWzql-SSL-ATR-channel/
-    Credit to @JimmyNixx for python
-    """
-    df = dataframe.copy()
-
-    df['ATR'] = ta.ATR(df, timeperiod=14)
-    df['smaHigh'] = df['high'].rolling(length).mean() + df['ATR']
-    df['smaLow'] = df['low'].rolling(length).mean() - df['ATR']
-    df['hlv'] = np.where(df['close'] > df['smaHigh'], 1, np.where(df['close'] < df['smaLow'], -1, np.NAN))
-    df['hlv'] = df['hlv'].ffill()
-    df['sslDown'] = np.where(df['hlv'] < 0, df['smaHigh'], df['smaLow'])
-    df['sslUp'] = np.where(df['hlv'] < 0, df['smaLow'], df['smaHigh'])
-
-    return df['sslDown'], df['sslUp']
-
-def SROC(dataframe, roclen=21, emalen=13, smooth=21):
-    df = dataframe.copy()
-
-    roc = ta.ROC(df, timeperiod=roclen)
-    ema = ta.EMA(df, timeperiod=emalen)
-    sroc = ta.ROC(ema, timeperiod=smooth)
-
-    return sroc
