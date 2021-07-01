@@ -1,13 +1,17 @@
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 import numpy as np
 import talib.abstract as ta
+from typing import Dict, List, Optional, Tuple
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy import (merge_informative_pair,
                                 DecimalParameter, IntParameter, CategoricalParameter)
 from pandas import DataFrame
 from functools import reduce
+from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.persistence import Trade
-from datetime import datetime
+from datetime import datetime, timedelta
+from cachetools import TTLCache
+from skopt.space import Dimension
 
 
 ###########################################################################################################
