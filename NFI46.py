@@ -1,7 +1,6 @@
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 import numpy as np
 import talib.abstract as ta
-from finta import TA as fta
 from typing import Dict, List, Optional, Tuple
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy import (merge_informative_pair,
@@ -948,37 +947,6 @@ class NFI46(IStrategy):
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         # The indicators for the 1h informative timeframe
         informative_1h = self.informative_1h_indicators(dataframe, metadata)
-        
-        # Populate/update the trade data if there is any, set trades to false if not live/dry
-        self.custom_trade_info[metadata['pair']] = self.populate_trades(metadata['pair'])
-        
-        if self.config['runmode'].value in ('backtest', 'hyperopt'):
-            assert (timeframe_to_minutes(self.timeframe) <= 30), "Backtest this strategy in 5m or 1m timeframe."
-
-        if self.timeframe == self.inf_1h:
-            dataframe = self.do_indicators(dataframe, metadata)
-        else:
-            if not self.dp:
-                return dataframe
-
-            informative = self.dp.get_pair_dataframe(pair=metadata['pair'], timeframe=self.inf_1h)
-
-            informative = self.do_indicators(informative.copy(), metadata)
-            
-            dataframe = merge_informative_pair(dataframe, informative, self.timeframe, self.inf_1h, ffill=True)
-            
-            skip_columns = [(s + "_" + self.inf_1h) for s in ['date', 'open', 'high', 'low', 'close', 'volume', 'emac', 'emao']]
-            dataframe.rename(columns=lambda s: s.replace("_{}".format(self.inf_1h), "") if (not s in skip_columns) else s, inplace=True)
-
-        # Slam some indicators into the trade_info dict so we can dynamic roi and custom stoploss in backtest
-        if self.dp.runmode.value in ('backtest', 'hyperopt'):
-            self.custom_trade_info[metadata['pair']]['roc'] = dataframe[['date', 'roc']].copy().set_index('date')
-            self.custom_trade_info[metadata['pair']]['atr'] = dataframe[['date', 'atr']].copy().set_index('date')
-            self.custom_trade_info[metadata['pair']]['sroc'] = dataframe[['date', 'sroc']].copy().set_index('date')
-            self.custom_trade_info[metadata['pair']]['ssl-dir'] = dataframe[['date', 'ssl-dir']].copy().set_index('date')
-            self.custom_trade_info[metadata['pair']]['rmi-up-trend'] = dataframe[['date', 'rmi-up-trend']].copy().set_index('date')
-            self.custom_trade_info[metadata['pair']]['candle-up-trend'] = dataframe[['date', 'candle-up-trend']].copy().set_index('date')            
-        
         dataframe = merge_informative_pair(dataframe, informative_1h, self.timeframe, self.inf_1h, ffill=True)
 
         # The indicators for the normal (5m) timeframe
