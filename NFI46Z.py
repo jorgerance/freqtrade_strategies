@@ -67,7 +67,7 @@ class NFI46Z(IStrategy):
     inf_1h = '1h'
 
     # Run "populate_indicators()" only for new candle.
-    process_only_new_candles = False
+    process_only_new_candles = True
 
     # These values can be overridden in the "ask_strategy" section in the config.
     use_sell_signal = True
@@ -297,7 +297,7 @@ class NFI46Z(IStrategy):
 
     buy_macd_1 = DecimalParameter(0.01, 0.09, default=0.02, space='buy', decimals=2, optimize=True, load=True)
     buy_macd_2 = DecimalParameter(0.01, 0.09, default=0.03, space='buy', decimals=2, optimize=True, load=True)
-    
+
     # Normal dips
     buy_dip_threshold_1 = DecimalParameter(0.001, 0.05, default=0.02, space='buy', decimals=3, optimize=True, load=True)
     buy_dip_threshold_2 = DecimalParameter(0.01, 0.2, default=0.14, space='buy', decimals=3, optimize=True, load=True)
