@@ -50,7 +50,7 @@ class CryptoFrogHO3A4(IStrategy):
     use_custom_stoploss = True
     custom_stop = {
         # Linear Decay Parameters
-        'decay-time': 96,       # minutes to reach end, I find it works well to match this to the final ROI value - default 1080
+        'decay-time': 49,       # minutes to reach end, I find it works well to match this to the final ROI value - default 1080
         'decay-delay': 0,         # minutes to wait before decay starts
         'decay-start': -0.299, # -0.32118, # -0.07163,     # starting value: should be the same or smaller than initial stoploss - default -0.30
         'decay-end': -0.02,       # ending value - default -0.03
@@ -84,14 +84,14 @@ class CryptoFrogHO3A4(IStrategy):
     custom_current_price_cache: TTLCache = TTLCache(maxsize=100, ttl=300) # 5 minutes
         
     # run "populate_indicators" only for new candle
-    process_only_new_candles = False
+    process_only_new_candles = True
 
     # Experimental settings (configuration will overide these if set)
     use_sell_signal = True
     sell_profit_only = False
     ignore_roi_if_buy_signal = True
 
-    use_dynamic_roi = False    
+    use_dynamic_roi = True    
     
     timeframe = '5m'
     informative_timeframe = '1h'
