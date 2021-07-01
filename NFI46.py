@@ -45,15 +45,12 @@ from skopt.space import Dimension
 ###########################################################################################################
 
 
-class NFI46FrogZ(IStrategy):
+class NFI46(IStrategy):
     INTERFACE_VERSION = 2
 
     # ROI table:
     minimal_roi = {
-        "0": 0.028,         # I feel lucky!
-        "10": 0.018,
-        "40": 0.005,
-        "180": 0.018,        # We're going up?
+        "0": 10
     }
 
     stoploss = -0.99
@@ -72,16 +69,12 @@ class NFI46FrogZ(IStrategy):
     inf_1h = '1h'
 
     # Run "populate_indicators()" only for new candle.
-    process_only_new_candles = False
-
-    custom_trade_info = {}
+    process_only_new_candles = True
 
     # These values can be overridden in the "ask_strategy" section in the config.
     use_sell_signal = True
     sell_profit_only = False
     ignore_roi_if_buy_signal = True
-
-    use_dynamic_roi = False
 
     # Number of candles the strategy requires before producing valid signals
     startup_candle_count: int = 400
@@ -1327,65 +1320,6 @@ class NFI46FrogZ(IStrategy):
                 reduce(lambda x, y: x | y, conditions),
                 'buy'
             ] = 1
-
-        dataframe.loc[
-            (
-                (
-                    ## close ALWAYS needs to be lower than the heiken low at 5m
-                    (dataframe['close'] < dataframe['Smooth_HA_L'])
-                    &
-                    ## Hansen's HA EMA at informative timeframe
-                    (dataframe['emac_1h'] < dataframe['emao_1h'])
-                )
-                &
-                (
-                    (
-                        ## potential uptick incoming so buy
-                        (dataframe['bbw_expansion'] == 1) & (dataframe['sqzmi'] == False)
-                        &
-                        (
-                            (dataframe['mfi'] < 20)
-                            |
-                            (dataframe['dmi_minus'] > 30)
-                        )
-                    )
-                    |
-                    (
-                        # this tries to find extra buys in undersold regions
-                        (dataframe['close'] < dataframe['sar'])
-                        &
-                        ((dataframe['srsi_d'] >= dataframe['srsi_k']) & (dataframe['srsi_d'] < 30))
-                        &
-                        ((dataframe['fastd'] > dataframe['fastk']) & (dataframe['fastd'] < 23))
-                        &
-                        (dataframe['mfi'] < 30)
-                    )
-                    |
-                    (
-                        # find smaller temporary dips in sideways
-                        (
-                            ((dataframe['dmi_minus'] > 30) & qtpylib.crossed_above(dataframe['dmi_minus'], dataframe['dmi_plus']))
-                            &
-                            (dataframe['close'] < dataframe['bb_lowerband'])
-                        )
-                        |
-                        (
-                            ## if nothing else is making a buy signal
-                            ## just throw in any old SQZMI shit based fastd
-                            ## this needs work!
-                            (dataframe['sqzmi'] == True)
-                            &
-                            ((dataframe['fastd'] > dataframe['fastk']) & (dataframe['fastd'] < 20))
-                        )
-                    )
-                    ## volume sanity checks
-                    &
-                    (dataframe['vfi'] < 0.0)                    
-                    &
-                    (dataframe['volume'] > 0)                    
-                )
-            ),
-            'buy'] = 1
 
         return dataframe
 
