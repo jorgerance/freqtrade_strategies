@@ -50,9 +50,9 @@ class CryptoFrogHO2(IStrategy):
     use_custom_stoploss = True
     custom_stop = {
         # Linear Decay Parameters
-        'decay-time': 166,       # minutes to reach end, I find it works well to match this to the final ROI value - default 1080
+        'decay-time': 105,      #166 # minutes to reach end, I find it works well to match this to the final ROI value - default 1080
         'decay-delay': 0,         # minutes to wait before decay starts
-        'decay-start': -0.085, # -0.32118, # -0.07163,     # starting value: should be the same or smaller than initial stoploss - default -0.30
+        'decay-start': -0.13, # -0.085,     # starting value: should be the same or smaller than initial stoploss - default -0.30
         'decay-end': -0.02,       # ending value - default -0.03
         # Profit and TA  
         'cur-min-diff': 0.03,     # diff between current and minimum profit to move stoploss up to min profit point
@@ -89,9 +89,9 @@ class CryptoFrogHO2(IStrategy):
     # Experimental settings (configuration will overide these if set)
     use_sell_signal = True
     sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    ignore_roi_if_buy_signal = True
 
-    use_dynamic_roi = True    
+    use_dynamic_roi = True
     
     timeframe = '5m'
     informative_timeframe = '1h'
