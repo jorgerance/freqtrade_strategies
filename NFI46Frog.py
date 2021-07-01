@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy import (merge_informative_pair,
                                 DecimalParameter, IntParameter, CategoricalParameter)
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from functools import reduce
 from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.persistence import Trade
@@ -179,6 +179,15 @@ class NFI46Frog(IStrategy):
     # 48 hours strict
     buy_pump_pull_threshold_6 = DecimalParameter(1.5, 3.0, default=2.0, space='buy', decimals=2, optimize=False, load=True)
     buy_pump_threshold_6 = DecimalParameter(0.4, 1.0, default=0.68, space='buy', decimals=3, optimize=False, load=True)
+    # 24 hours loose
+    buy_pump_pull_threshold_7 = DecimalParameter(1.5, 3.0, default=1.7, space='buy', decimals=2, optimize=False, load=True)
+    buy_pump_threshold_7 = DecimalParameter(0.4, 1.0, default=0.66, space='buy', decimals=3, optimize=False, load=True)
+    # 36 hours loose
+    buy_pump_pull_threshold_8 = DecimalParameter(1.5, 3.0, default=1.7, space='buy', decimals=2, optimize=False, load=True)
+    buy_pump_threshold_8 = DecimalParameter(0.4, 1.0, default=0.7, space='buy', decimals=3, optimize=False, load=True)
+    # 48 hours loose
+    buy_pump_pull_threshold_9 = DecimalParameter(1.3, 2.0, default=1.4, space='buy', decimals=2, optimize=False, load=True)
+    buy_pump_threshold_9 = DecimalParameter(0.4, 1.8, default=1.6, space='buy', decimals=3, optimize=False, load=True)
 
     buy_min_inc_1 = DecimalParameter(0.01, 0.05, default=0.022, space='buy', decimals=3, optimize=False, load=True)
     buy_rsi_1h_min_1 = DecimalParameter(25.0, 40.0, default=30.0, space='buy', decimals=1, optimize=False, load=True)
@@ -1637,7 +1646,7 @@ def chaikin_money_flow(dataframe, n=20, fillna=False):
     if fillna:
         cmf = cmf.replace([np.inf, -np.inf], np.nan).fillna(0)
     return Series(cmf, name='cmf')
-    
+
 def RMI(dataframe, *, length=20, mom=5):
     """
     Source: https://github.com/freqtrade/technical/blob/master/technical/indicators/indicators.py#L912
