@@ -45,30 +45,34 @@ from skopt.space import Dimension
 ###########################################################################################################
 
 
-class NFI46Frog(IStrategy):
+class NFI46FrogZ(IStrategy):
     INTERFACE_VERSION = 2
 
-    # # ROI table:
+    # ROI table:
     minimal_roi = {
-        "0": 10,
+        "0": 0.028,         # I feel lucky!
+        "10": 0.018,
+        "40": 0.005,
+        "180": 0.018,        # We're going up?
     }
 
-    stoploss = -1.0
+    stoploss = -0.99
 
     # Trailing stoploss (not used)
     trailing_stop = False
-    trailing_only_offset_is_reached = True
+    trailing_only_offset_is_reached = False
     trailing_stop_positive = 0.01
-    trailing_stop_positive_offset = 0.03
+    trailing_stop_positive_offset = 0.025
 
-    use_custom_stoploss = False
-
+    # Custom Stoploss
+    use_custom_stoploss = True
+    
     # Optimal timeframe for the strategy.
     timeframe = '5m'
     inf_1h = '1h'
 
     # Run "populate_indicators()" only for new candle.
-    process_only_new_candles = True
+    process_only_new_candles = False
 
     custom_trade_info = {}
 
@@ -84,10 +88,10 @@ class NFI46Frog(IStrategy):
 
     # Optional order type mapping.
     order_types = {
-        'buy': 'limit',
-        'sell': 'limit',
-        'trailing_stop_loss': 'limit',
-        'stoploss': 'limit',
+        'buy': 'market',
+        'sell': 'market',
+        'trailing_stop_loss': 'market',
+        'stoploss': 'market',
         'stoploss_on_exchange': False
     }
 
@@ -1473,97 +1477,43 @@ class NFI46Frog(IStrategy):
 
         return dataframe
 
-    """
-    Everything from here completely stolen from the godly work of @werkkrew
-    
-    Custom Stoploss 
-    """ 
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime, current_rate: float, current_profit: float, **kwargs) -> float:
-        trade_dur = int((current_time.timestamp() - trade.open_date_utc.timestamp()) // 60)
+        # Manage losing trades and open room for better ones.
 
-        if self.config['runmode'].value in ('live', 'dry_run'):
-            dataframe, last_updated = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
-            sroc = dataframe['sroc'].iat[-1]
-        # If in backtest or hyperopt, get the indicator values out of the trades dict (Thanks @JoeSchr!)
+        if (current_profit > 0):
+            return 0.99
         else:
-            sroc = self.custom_trade_info[trade.pair]['sroc'].loc[current_time]['sroc']
+            trade_time_50 = current_time - timedelta(minutes=50)
 
-        if current_profit < self.cstp_threshold.value:
-            if self.cstp_bail_how.value == 'roc' or self.cstp_bail_how.value == 'any':
-                # Dynamic bailout based on rate of change
-                if (sroc/100) <= self.cstp_bail_roc.value:
-                    return 0.001
-            if self.cstp_bail_how.value == 'time' or self.cstp_bail_how.value == 'any':
-                # Dynamic bailout based on time
-                if trade_dur > self.cstp_bail_time.value:
-                    return 0.001
-                   
-        return 1
+            # Trade open more then 60 minutes. For this strategy it's means -> loss
+            # Let's try to minimize the loss
 
-    """
-    Freqtrade ROI Overload for dynamic ROI functionality
-    """
-    def min_roi_reached_dynamic(self, trade: Trade, current_profit: float, current_time: datetime, trade_dur: int) -> Tuple[Optional[int], Optional[float]]:
+            if (trade_time_50 > trade.open_date_utc):
 
-        minimal_roi = self.minimal_roi
-        _, table_roi = self.min_roi_reached_entry(trade_dur)
+                try:
+                    number_of_candle_shift = int((trade_time_50 - trade.open_date_utc).total_seconds() / 300)
+                    dataframe, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+                    candle = dataframe.iloc[-number_of_candle_shift].squeeze()
 
-        # see if we have the data we need to do this, otherwise fall back to the standard table
-        if self.custom_trade_info and trade and trade.pair in self.custom_trade_info:
-            if self.config['runmode'].value in ('live', 'dry_run'):
-                dataframe, last_updated = self.dp.get_analyzed_dataframe(pair=trade.pair, timeframe=self.timeframe)
-                rmi_trend = dataframe['rmi-up-trend'].iat[-1]
-                candle_trend = dataframe['candle-up-trend'].iat[-1]
-                ssl_dir = dataframe['ssl-dir'].iat[-1]
-            # If in backtest or hyperopt, get the indicator values out of the trades dict (Thanks @JoeSchr!)
-            else:
-                rmi_trend = self.custom_trade_info[trade.pair]['rmi-up-trend'].loc[current_time]['rmi-up-trend']
-                candle_trend = self.custom_trade_info[trade.pair]['candle-up-trend'].loc[current_time]['candle-up-trend']
-                ssl_dir = self.custom_trade_info[trade.pair]['ssl-dir'].loc[current_time]['ssl-dir']
+                    # We are at bottom. Wait...
+                    if candle['rsi_1h'] < 35:
+                        return 0.99
 
-            min_roi = table_roi
-            max_profit = trade.calc_profit_ratio(trade.max_rate)
-            pullback_value = (max_profit - self.droi_pullback_amount.value)
-            in_trend = False
+                    # Are we still sinking? 
+                    if candle['close'] > candle['ema_200']:
+                        if current_rate * 1.025 < candle['open']:
+                            return 0.01 
 
-            if self.droi_trend_type.value == 'rmi' or self.droi_trend_type.value == 'any':
-                if rmi_trend == 1:
-                    in_trend = True
-            if self.droi_trend_type.value == 'ssl' or self.droi_trend_type.value == 'any':
-                if ssl_dir == 'up':
-                    in_trend = True
-            if self.droi_trend_type.value == 'candle' or self.droi_trend_type.value == 'any':
-                if candle_trend == 1:
-                    in_trend = True
+                    if current_rate * 1.015 < candle['open']:
+                        return 0.01
 
-            # Force the ROI value high if in trend
-            if (in_trend == True):
-                min_roi = 100
-                # If pullback is enabled, allow to sell if a pullback from peak has happened regardless of trend
-                if self.droi_pullback.value == True and (current_profit < pullback_value):
-                    if self.droi_pullback_respect_table.value == True:
-                        min_roi = table_roi
-                    else:
-                        min_roi = current_profit / 2
+                except IndexError as error:
 
-        else:
-            min_roi = table_roi
+                    # Whoops, set stoploss at 10%
+                    return 0.5
 
-        return trade_dur, min_roi
+        return 0.99
 
-    # Change here to allow loading of the dynamic_roi settings
-    def min_roi_reached(self, trade: Trade, current_profit: float, current_time: datetime) -> bool:  
-        trade_dur = int((current_time.timestamp() - trade.open_date_utc.timestamp()) // 60)
-
-        if self.use_dynamic_roi:
-            _, roi = self.min_roi_reached_dynamic(trade, current_profit, current_time, trade_dur)
-        else:
-            _, roi = self.min_roi_reached_entry(trade_dur)
-        if roi is None:
-            return False
-        else:
-            return current_profit > roi    
-    
     # Get the current price from the exchange (or local cache)
     def get_current_price(self, pair: str, refresh: bool) -> float:
         if not refresh:
