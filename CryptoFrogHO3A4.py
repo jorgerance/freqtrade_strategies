@@ -32,16 +32,16 @@ class CryptoFrogHO3A4(IStrategy):
 
     # ROI table - this strat REALLY benefits from roi and trailing hyperopt:
     minimal_roi = {
-         "0": 0.211,
-        "10": 0.02,
-        "55": 0.01,
-        "96": 0
+        "0": 0.219,
+        "14": 0.021,
+        "24": 0.01,
+        "49": 0
     }
 
     # Trailing stop:
     trailing_stop = True
-    trailing_stop_positive = 0.123
-    trailing_stop_positive_offset = 0.206
+    trailing_stop_positive = 0.324
+    trailing_stop_positive_offset = 0.42
     trailing_only_offset_is_reached = True
 
     # Stoploss:
