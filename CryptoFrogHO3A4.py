@@ -22,11 +22,11 @@ class CryptoFrogHO3A4(IStrategy):
     sell_params = {
         "cstp_bail_how": "roc",
         "cstp_bail_roc": -0.01,
-        "cstp_bail_time": 1310,
-        "cstp_threshold": 0.0,
-        "droi_pullback": True,
-        "droi_pullback_amount": 0.009,
-        "droi_pullback_respect_table": False,
+        "cstp_bail_time": 1124,
+        "cstp_threshold": -0.001,
+        "droi_pullback": False,
+        "droi_pullback_amount": 0.005,
+        "droi_pullback_respect_table": True,
         "droi_trend_type": "rmi",
     }
 
@@ -89,9 +89,9 @@ class CryptoFrogHO3A4(IStrategy):
     # Experimental settings (configuration will overide these if set)
     use_sell_signal = True
     sell_profit_only = False
-    ignore_roi_if_buy_signal = False
+    ignore_roi_if_buy_signal = True
 
-    use_dynamic_roi = True    
+    use_dynamic_roi = False    
     
     timeframe = '5m'
     informative_timeframe = '1h'
